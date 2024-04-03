@@ -102,6 +102,7 @@ use bitcoin::secp256k1::schnorr::Signature;
 use bitcoin::util::address::{Address, Payload, WitnessVersion};
 use bitcoin::util::schnorr::TweakedPublicKey;
 use core::convert::{Infallible, TryFrom};
+use core::str::FromStr;
 use core::time::Duration;
 use crate::io;
 use crate::blinded_path::BlindedPath;
@@ -120,6 +121,8 @@ use crate::util::ser::{HighZeroBytesDroppedBigSize, Iterable, SeekReadable, With
 use crate::util::string::PrintableString;
 
 use crate::prelude::*;
+
+use super::parse::Bech32Encode;
 
 #[cfg(feature = "std")]
 use std::time::SystemTime;
@@ -425,6 +428,30 @@ pub struct Bolt12Invoice {
 	bytes: Vec<u8>,
 	contents: InvoiceContents,
 	signature: Signature,
+}
+
+impl Bech32Encode for Bolt12Invoice {
+	const BECH32_HRP: &'static str = "lni";
+}
+
+impl FromStr for Bolt12Invoice {
+	type Err = Bolt12ParseError;
+
+	fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
+		Self::from_bech32_str(s)
+	}
+}
+
+impl AsRef<[u8]> for Bolt12Invoice {
+	fn as_ref(&self) -> &[u8] {
+		&self.bytes
+	}
+}
+
+impl core::fmt::Display for Bolt12Invoice {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+		self.fmt_bech32_str(f)
+	}
 }
 
 /// The contents of an [`Bolt12Invoice`] for responding to either an [`Offer`] or a [`Refund`].
